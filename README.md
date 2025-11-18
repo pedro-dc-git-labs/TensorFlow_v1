@@ -42,4 +42,35 @@ Envía una petición `POST /valorar` con el siguiente cuerpo JSON:
 }
 ```
 
+Ejemplo con varios medios disponibles:
+
+```json
+{
+  "servicio": {
+    "fecha_hora_carga": "2024-07-01T08:00:00",
+    "coordenadas": {"latitud": 41.387, "longitud": 2.170}
+  },
+  "medios": [
+    {
+      "matricula": "1234-ABC",
+      "fecha_disponibilidad": "2024-07-01T06:30:00",
+      "distancia_hasta_carga": 12.5,
+      "amplitud_jornada": "2024-07-01T18:00:00"
+    },
+    {
+      "matricula": "5678-DEF",
+      "fecha_disponibilidad": "2024-07-01T07:00:00",
+      "distancia_hasta_carga": 8.2,
+      "amplitud_jornada": "2024-07-01T17:30:00"
+    },
+    {
+      "matricula": "9012-GHI",
+      "fecha_disponibilidad": "2024-07-01T05:45:00",
+      "distancia_hasta_carga": 20.0,
+      "amplitud_jornada": "2024-07-01T19:00:00"
+    }
+  ]
+}
+```
+
 La respuesta incluye los valores ω1, ω2, ω3 y la valoración final entre 0 y 100 calculada con TensorFlow.
