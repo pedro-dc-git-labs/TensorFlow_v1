@@ -1,86 +1,97 @@
-# TensorFlow_v1
+# 🚚 Valoración de Medios de Transporte -- FastAPI + TensorFlow
 
-Servicio FastAPI para valorar medios de transporte en función de distancia, disponibilidad y amplitud de jornada utilizando TensorFlow.
+Función de COSTES
 
-## Requisitos
+Valores
+-   ω1 Distancia entre el medio y la ubicación del servicio, calculo Haversine (tiempo de respuesta)
+-   ω2 Tiempo de espera hasta la carga
+-   ω3 Amplitud de jornada posterior a la carga
+-   ω4 Compatibilidad de Unidad Productiva (UP), directa no evaluacion de compatibilidad, se resta peso para compesar. 
+-   ω5 Tipo de evento operativo, prioriza eventos finales
 
-- Python 3.11+
-- Dependencias del archivo `requirements.txt`
+Pesos
+-   ω1 50/100
+-   ω2 20/100
+-   ω3 20/100
+-   ω4 05/100 
+-   ω5 05/100
 
-Instala dependencias:
+El cálculo se realiza mediante operaciones vectorizadas con TensorFlow, 
+devolviendo una puntuación final entre 0 y 100 para cada medio disponible.
 
-```bash
+## IMPORTANTE !!!!!! **** NOTAS RENDIMIENTO *****
+Retiramos restriciones fuertes, tiene mas sentido usar filtros para limitar la entrada que filtrar por pesos (zonas, compatibilidades)
+Retiramos calculos externos para no penalizar rendimiento, llamadas externas (PTV, Google) 
+Retiramos monitoreo consola
+## IMPORTANTE !!!!!! **** CONSUMO DE RECURSOS
+Limitar instancias, reciclado.
+****Pendiente, mover fuera de TROS 
+
+
+------------------------------------------------------------------------
+
+## 📦 Requisitos
+
+-   Python **3.11 o superior**
+-   Dependencias del proyecto:
+
+```{=html}
+<!-- -->
+```
+    fastapi
+    uvicorn
+    tensorflow
+
+Instalar dependencias:
+
+``` bash
 pip install -r requirements.txt
 ```
 
-## Ejecución
+------------------------------------------------------------------------
 
-Inicia el servidor de desarrollo con Uvicorn:
+## ▶️ Ejecución del servidor
 
-```bash
+Inicia el servidor con recarga automática:
+
+``` bash
 uvicorn main:app --reload
 ```
 
-## Uso
+------------------------------------------------------------------------
 
-Envía una petición `POST /valorar` con el siguiente cuerpo JSON (nota que tanto el servicio como los medios incluyen su UP y coordenadas completas):
+## 📡 Endpoints
 
-```json
+### GET `/`
+
+Devuelve un mensaje de estado.
+
+### POST `/valorar`
+
+Calcula la valoración de cada medio disponible.
+
+Ejemplo de entrada:
+
+``` json
 {
   "servicio": {
-    "fecha_hora_carga": "2024-07-01T08:00:00",
-    "coordenadas": {"latitud": 41.387, "longitud": 2.170},
-    "UP": "BCN-01"
+    "fecha_hora_carga": "2025-01-10T10:00:00",
+    "coordenadas": { "latitud": 40.417, "longitud": -3.703 },
+    "UP": "UP01"
   },
   "medios": [
     {
-      "matricula": "1234-ABC",
-      "fecha_disponibilidad": "2024-07-01T06:30:00",
-      "coordenadas": {"latitud": 41.40, "longitud": 2.19},
-      "amplitud_jornada": "2024-07-01T18:00:00",
-      "UP": "BCN-01",
+      "matricula": "1111-AAA",
+      "fecha_disponibilidad": "2025-01-10T08:30:00",
+      "coordenadas": { "latitud": 40.400, "longitud": -3.700 },
+      "amplitud_jornada": "2025-01-10T18:00:00",
+      "UP": "UP01",
       "tipo_evento": "DESCARGA"
     }
   ]
 }
 ```
 
-Ejemplo con varios medios disponibles:
+------------------------------------------------------------------------
 
-```json
-{
-  "servicio": {
-    "fecha_hora_carga": "2024-07-01T08:00:00",
-    "coordenadas": {"latitud": 41.387, "longitud": 2.170},
-    "UP": "BCN-01"
-  },
-  "medios": [
-    {
-      "matricula": "1234-ABC",
-      "fecha_disponibilidad": "2024-07-01T06:30:00",
-      "coordenadas": {"latitud": 41.40, "longitud": 2.19},
-      "amplitud_jornada": "2024-07-01T18:00:00",
-      "UP": "BCN-01",
-      "tipo_evento": "DESCARGA"
-    },
-    {
-      "matricula": "5678-DEF",
-      "fecha_disponibilidad": "2024-07-01T07:00:00",
-      "coordenadas": {"latitud": 41.33, "longitud": 2.11},
-      "amplitud_jornada": "2024-07-01T17:30:00",
-      "UP": "BCN-02",
-      "tipo_evento": "ORDEN_ADMINISTRATIVA"
-    },
-    {
-      "matricula": "9012-GHI",
-      "fecha_disponibilidad": "2024-07-01T05:45:00",
-      "coordenadas": {"latitud": 41.52, "longitud": 2.03},
-      "amplitud_jornada": "2024-07-01T19:00:00",
-      "UP": "MAD-03",
-      "tipo_evento": "OTRO"
-    }
-  ]
-}
-```
 
-La respuesta incluye los valores ω1, ω2, ω3, ω4 y ω5 junto con la distancia estimada por Haversine y la valoración final entre 0 y 100 calculada con TensorFlow.
