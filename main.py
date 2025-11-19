@@ -1,6 +1,8 @@
+"""Servicio FastAPI para valorar medios de transporte con TensorFlow."""
+
+import math
 from datetime import datetime
 from typing import List
-import math
 
 import tensorflow as tf
 from fastapi import FastAPI
@@ -8,17 +10,23 @@ from pydantic import BaseModel, Field
 
 
 class Coordenadas(BaseModel):
+    """Modelo de coordenadas geográficas en grados decimales."""
+
     latitud: float = Field(..., description="Latitud en grados decimales")
     longitud: float = Field(..., description="Longitud en grados decimales")
 
 
 class Servicio(BaseModel):
+    """Información del servicio que requiere un medio de transporte."""
+
     fecha_hora_carga: datetime = Field(..., description="Fecha y hora programada de la carga")
     coordenadas: Coordenadas
     UP: str = Field(..., description="Unidad productiva del servicio")
 
 
 class MedioEntrada(BaseModel):
+    """Datos requeridos para valorar un medio de transporte disponible."""
+
     matricula: str = Field(..., description="Identificador del medio de transporte")
     fecha_disponibilidad: datetime = Field(..., description="Momento en que el medio queda disponible")
     coordenadas: Coordenadas
@@ -28,6 +36,8 @@ class MedioEntrada(BaseModel):
 
 
 class ValoracionMedio(BaseModel):
+    """Respuesta detallada de la valoración de un medio."""
+
     matricula: str
     omega1: float
     omega2: float
@@ -39,6 +49,8 @@ class ValoracionMedio(BaseModel):
 
 
 class PeticionValoracion(BaseModel):
+    """Petición HTTP para valorar varios medios frente a un servicio."""
+
     servicio: Servicio
     medios: List[MedioEntrada]
 
@@ -47,6 +59,8 @@ app = FastAPI(title="Valoración de medios de transporte", version="1.0.0")
 
 
 def _segundos_positivos(delta: float) -> float:
+    """Devuelve el valor del delta en segundos garantizando que sea no negativo."""
+
     return max(delta, 0.0)
 
 
@@ -67,6 +81,8 @@ def _haversine_metros(origen: Coordenadas, destino: Coordenadas) -> float:
 
 
 def _compatibilidad_up(up_servicio: str, up_medio: str) -> float:
+    """Calcula la compatibilidad entre unidades productivas."""
+
     if up_servicio == up_medio:
         return 1.0
     if up_servicio[:2] == up_medio[:2]:
@@ -75,11 +91,15 @@ def _compatibilidad_up(up_servicio: str, up_medio: str) -> float:
 
 
 def _valor_tipo_evento(tipo_evento: str) -> float:
+    """Asigna un valor según el tipo de evento reportado por el medio."""
+
     eventos_valorados = {"DESCARGA", "ORDEN_ADMINISTRATIVA"}
     return 1.0 if tipo_evento.upper() in eventos_valorados else 0.0
 
 
 def _calcular_valoraciones(payload: PeticionValoracion) -> List[ValoracionMedio]:
+    """Ejecuta el cálculo tensorial de valoración para cada medio solicitado."""
+
     if not payload.medios:
         return []
 
@@ -155,14 +175,13 @@ def _calcular_valoraciones(payload: PeticionValoracion) -> List[ValoracionMedio]
 
 @app.post("/valorar", response_model=List[ValoracionMedio])
 async def valorar(payload: PeticionValoracion) -> List[ValoracionMedio]:
-    """
-    Calcula la valoración de cada medio utilizando TensorFlow siguiendo los criterios de distancia, tiempo
-    de espera y amplitud de jornada posterior a la carga.
-    """
+    """Calcula la valoración TensorFlow de cada medio para la solicitud recibida."""
 
     return _calcular_valoraciones(payload)
 
 
 @app.get("/")
-async def root() -> dict:
+async def root() -> dict[str, str]:
+    """Expone un mensaje simple para comprobar la disponibilidad del servicio."""
+
     return {"mensaje": "Servicio de valoración de medios de transporte"}
