@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import List
+import math
 
 import tensorflow as tf
 from fastapi import FastAPI
@@ -54,10 +55,11 @@ def _haversine_metros(origen: Coordenadas, destino: Coordenadas) -> float:
 
     radio_tierra_m = 6371000.0
 
-    lat1 = tf.constant(origen.latitud, dtype=tf.float32) * tf.constant(tf.math.pi / 180.0, dtype=tf.float32)
-    lat2 = tf.constant(destino.latitud, dtype=tf.float32) * tf.constant(tf.math.pi / 180.0, dtype=tf.float32)
+    radian_factor = tf.constant(math.pi / 180.0, dtype=tf.float32)
+    lat1 = tf.constant(origen.latitud, dtype=tf.float32) * radian_factor
+    lat2 = tf.constant(destino.latitud, dtype=tf.float32) * radian_factor
     dlat = lat2 - lat1
-    dlon = (destino.longitud - origen.longitud) * tf.math.pi / 180.0
+    dlon = (destino.longitud - origen.longitud) * radian_factor
 
     a = tf.sin(dlat / 2) ** 2 + tf.cos(lat1) * tf.cos(lat2) * tf.sin(dlon / 2) ** 2
     c = 2 * tf.atan2(tf.sqrt(a), tf.sqrt(1 - a))
