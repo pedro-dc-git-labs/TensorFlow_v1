@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import List
 
 import tensorflow as tf
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from pydantic import BaseModel, Field
 
 
@@ -56,6 +56,7 @@ class PeticionValoracion(BaseModel):
 
 
 app = FastAPI(title="Valoración de medios de transporte", version="1.0.0")
+router = APIRouter(prefix="/v1")
 
 
 def _segundos_positivos(delta: float) -> float:
@@ -173,15 +174,18 @@ def _calcular_valoraciones(payload: PeticionValoracion) -> List[ValoracionMedio]
     return resultados
 
 
-@app.post("/valorar", response_model=List[ValoracionMedio])
+@router.post("/valorar", response_model=List[ValoracionMedio])
 async def valorar(payload: PeticionValoracion) -> List[ValoracionMedio]:
     """Calcula la valoración TensorFlow de cada medio para la solicitud recibida."""
 
     return _calcular_valoraciones(payload)
 
 
-@app.get("/")
+@router.get("/")
 async def root() -> dict[str, str]:
     """Expone un mensaje simple para comprobar la disponibilidad del servicio."""
 
     return {"mensaje": "Servicio de valoración de medios de transporte"}
+
+
+app.include_router(router)
